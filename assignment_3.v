@@ -32,10 +32,10 @@ four_two_enc fte1(
 );
 
 //perform top-level output logic:
-assign enc_outputs[3] = ~four_two_MS[0]; //assert high if input on 4MSB triggers
+assign enc_outputs[3] =  ~four_two_MS[0]; //assert high if input on 4MSB triggers
 assign enc_outputs[2] = (~four_two_MS[0] & four_two_MS[2]) | (four_two_MS[0] & four_two_LS[2]); //output MS encoder if any 4MSB triggers, otherwise output LS encoder
 assign enc_outputs[1] = (~four_two_MS[0] & four_two_MS[1]) | (four_two_MS[0] & four_two_LS[1]); //output MS encoder if any 4MSB triggers, otherwise output LS encoder
-assign enc_outputs[0] = four_two_MS[0] & four_two_LS[0];
+assign enc_outputs[0] =   four_two_MS[0] & four_two_LS[0];
 
 ///////////////////////////////////
 //Ones Counter Top Level Design://
@@ -98,10 +98,12 @@ module four_two_enc(
 input  [3:0] four_two_inputs,
 output [2:0] four_two_outputs //bit 0 is "All_zero"
 );
-//instantiate primitve for MSB:
+//instantiate primitve for MSB (Bit 2):
 four_two_enc_MSB fteM0(four_two_outputs[2], four_two_inputs[3], four_two_inputs[2], four_two_inputs[1], four_two_inputs[0]);
-//instantiate primitive for LSB:
+
+//instantiate primitive for LSB (Bit 1):
 four_two_enc_LSB fteL0(four_two_outputs[1], four_two_inputs[3], four_two_inputs[2], four_two_inputs[1], four_two_inputs[0]);
+
 //switching fn for bit 0:
 assign four_two_outputs[0] = ~(four_two_inputs[3] | four_two_inputs[2] | four_two_inputs[1] | four_two_inputs[0]);
 endmodule
@@ -120,7 +122,7 @@ table
   0  1  ?  ?  : 1;
   0  0  1  ?  : 0;
   0  0  0  1  : 0;
-  0  0  0  0  : 0;//? //cannot have ? on output: quartus will accept it but modelsim will not!
+  0  0  0  0  : 0;//? //cannot have ? on output: quartus will accept it but modelsim will not
 endtable
 endprimitive
 
