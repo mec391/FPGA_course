@@ -2,8 +2,8 @@
 
 //4bit binary synchronous counter with negative edge trigger sync, sync load and reset, parallel load of data, active low enable
 //scalable 8 bit ring counter that moves from msb to lsb, resets to msb = 1 and others = 0
+//alternating up and down ring counters, switches on each clock cycle
 
-//minor timing issues with part 3, fix if have time
 module assignment_6#(
 parameter word_size = 8)
 (
@@ -54,15 +54,14 @@ end
 reg [word_size-1:0] r_up_ring;
 reg [word_size-1:0] r_down_ring;
 reg r_ring_toggle;
-
+reg r_reset_dv; //there is a 1 clock cycle hold after a reset that this will remove
 
 always@(posedge i_clk) //run the counter
 begin
 
-
-if(~i_reset_n)
+if(~i_reset_n) 
 begin
-r_ring_toggle <= 0;
+r_ring_toggle <= 1;
 r_down_ring[word_size-1] <= 1;
 r_down_ring[word_size-2:0] <= 0;
 r_up_ring[0] <= 1;
@@ -74,28 +73,30 @@ else
 	if(~i_cnt_enable_n)
 	begin
 	r_ring_toggle <= ~r_ring_toggle;
+
+	case(r_ring_toggle)
+	0:begin
+		o_counter3 <= r_down_ring;
 	end
+	1:begin
+	o_counter3 <= r_up_ring;
+
+	for (ii=0; ii < word_size-1; ii=ii+1) r_down_ring[ii] <= r_down_ring[ii+1]; //shift over values excluding MSB assignment
+	r_down_ring[word_size-1] <= r_down_ring[0]; //assign MSB - move LSB to MSB
+
+	for (ii=0; ii < word_size-1; ii=ii+1) r_up_ring[ii+1] <= r_up_ring[ii]; 
+	r_up_ring[0] <= r_up_ring[word_size-1]; 
+	end
+	endcase
+	end
+
 	else begin 
 	r_ring_toggle <= r_ring_toggle;
+	o_counter3 <= o_counter3;
+	r_down_ring <= r_down_ring;
+	r_up_ring <= r_up_ring;
 	end
 
-case(r_ring_toggle)
-0:begin
-o_counter3 <= r_down_ring;
 end
-1:begin
-o_counter3 <= r_up_ring;
-
-for (ii=0; ii < word_size-1; ii=ii+1) r_down_ring[ii] <= r_down_ring[ii+1]; //shift over values excluding MSB assignment
-r_down_ring[word_size-1] <= r_down_ring[0]; //assign MSB - move LSB to MSB
-
-for (ii=0; ii < word_size-1; ii=ii+1) r_up_ring[ii+1] <= r_up_ring[ii]; 
-r_up_ring[0] <= r_up_ring[word_size-1]; 
-end
-endcase
-
-end
-
-
 endmodule
 
